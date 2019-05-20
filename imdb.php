@@ -130,7 +130,10 @@ class IMDB
                 $this->data['show'] = array_merge($this->data['show'], $ts->fetch());
             }
             
-        }    
+        }elseif($this->data['type'] == 'TV Series')
+        {
+            $this->data['seasons'] = (IMDB::getMatches($this->html, '~Seasons:\s*<a\s*href="(?:.*)\?season=(\d*)">~Ui',1));
+        }
 
 
         //gets titles
@@ -150,6 +153,10 @@ class IMDB
  		//languages
 		$this->data['langs'] = (IMDB::getMatches($this->html, '~Language</td>\s*<td>((?:\s*.*\s*)*?)</td>~Ui',1));
 		$this->data['langs'] =  (IMDB::getMatches($this->data['langs'] , '~<a (?:.*)>\s*(.*)\s*</a>~Ui')[1]);
+
+
+        
+
 
        return $this->data;   
     }
@@ -334,7 +341,7 @@ if ($aMatches === false || is_null($aMatches[0]) || empty($aMatches[0][0])) {
 {
     // https://www.imdb.com/title/tt9432978/reference
 
-    if(!isset($_GET['seasson']) or empty($_GET['seasson']))
+    if(!isset($_GET['season']) or empty($_GET['season']))
     {
         $c = new IMDB("https://www.imdb.com/title/". $aMatches[0][0] . "/reference");
         header('Access-Control-Allow-Origin: *');  
@@ -346,10 +353,10 @@ if ($aMatches === false || is_null($aMatches[0]) || empty($aMatches[0][0])) {
         {
             header('Access-Control-Allow-Origin: *');  
             header('Content-Type: application/json');
-            echo json_encode(IMDB::getEpisodes($aMatches[0][0], $_GET['seasson']));
+            echo json_encode(IMDB::getEpisodes($aMatches[0][0], $_GET['season']));
         }else
         {
-            $eps = IMDB::getEpisodes($aMatches[0][0], $_GET['seasson']);
+            $eps = IMDB::getEpisodes($aMatches[0][0], $_GET['season']);
             $e = $eps['episodes'][intval($_GET['episode'])];
 
             //fet episode data
