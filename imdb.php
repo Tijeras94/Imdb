@@ -275,8 +275,38 @@ class IMDB
 
     }
 
+    public static function getEpisodes($imdb, $s)
+    {
+        $html = IMDB::get("https://www.imdb.com/title/". $imdb . "/episodes?season=" . $s);
+
+        $eps = IMDB::getMatches($html, '~<div class="list_item (?:odd|even)">(?:\s*(?:.*)\s*)*?<div class="clear">~m')[0];
+
+        $s = intval(IMDB::getMatches($html, '~episode_top"\s*itemprop="name">Season&nbsp;(.*)</h3>~m',1));
+
+        $e = array('seasson' => $s);
+        foreach ($eps as $ep)
+        {
+            $pt = IMDB::getMatches($ep, '~<a href="(.+)"\s*title="(.+)"\s*itemprop="name">(.+)</a>~m');
+  
+            $title = $pt[2][0];
+            $imdb = trim(IMDB::getMatches($pt[1][0], '~/title/(tt.*)/~Ui',1));
+            $episode = intval(IMDB::getMatches($ep, '~<meta\s*itemprop="episodeNumber"\s*content="(.*?)"/>~m',1));
+            $desc = IMDB::getMatches($ep, '~itemprop="description">\s*(.*)</div>~m',1);
+            $airdate = IMDB::getMatches($ep, '~airdate">\s*(.*)?\s*</div>~m',1);
+            $rating = trim(IMDB::getMatches($ep, '/<span class="ipl-rating-star__rating">(\d.*?\d*)<\/span>/ms', 1));
+            
+
+            $e['episodes'][$episode]  = array('imdb' => $imdb, 'title' => $title, 
+                                            'description'=>  trim($desc), 
+                                            'airdate' => trim($airdate), 'rating' => $rating);
+        }
+
+        return $e;
+    }
+
 
 }
+
 
  if(!isset($_GET['i']) or empty($_GET['i']))
  {
@@ -289,6 +319,7 @@ class IMDB
 
 preg_match_all("~tt(\d+)~", @$_GET['i'], $aMatches);
 if ($aMatches === false || is_null($aMatches[0]) || empty($aMatches[0][0])) {
+
     // args is not an imdb id, do a search instead
     $search = IMDB::search(@$_GET['i']);
     if(count($search)> 0)
@@ -302,11 +333,34 @@ if ($aMatches === false || is_null($aMatches[0]) || empty($aMatches[0][0])) {
 }else
 {
     // https://www.imdb.com/title/tt9432978/reference
-    $c = new IMDB("https://www.imdb.com/title/". $aMatches[0][0] . "/reference");
 
-    header('Access-Control-Allow-Origin: *');  
-    header('Content-Type: application/json');
-    echo json_encode($c->fetch());
+    if(!isset($_GET['seasson']) or empty($_GET['seasson']))
+    {
+        $c = new IMDB("https://www.imdb.com/title/". $aMatches[0][0] . "/reference");
+        header('Access-Control-Allow-Origin: *');  
+        header('Content-Type: application/json');
+        echo json_encode($c->fetch());
+    }else
+    {
+        if(!isset($_GET['episode']) or empty($_GET['episode']))
+        {
+            header('Access-Control-Allow-Origin: *');  
+            header('Content-Type: application/json');
+            echo json_encode(IMDB::getEpisodes($aMatches[0][0], $_GET['seasson']));
+        }else
+        {
+            $eps = IMDB::getEpisodes($aMatches[0][0], $_GET['seasson']);
+            $e = $eps['episodes'][intval($_GET['episode'])];
+
+            //fet episode data
+            $c = new IMDB("https://www.imdb.com/title/". $e['imdb'] . "/reference");
+            header('Access-Control-Allow-Origin: *');  
+            header('Content-Type: application/json');
+            echo json_encode($c->fetch());
+        }
+    }
+
+    
 
     //var_dump($c->fetch());
     //var_dump($c->search("home"));
