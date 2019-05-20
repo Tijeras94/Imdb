@@ -87,11 +87,8 @@ class IMDB
             $tmp = gzdecode($tmp);
         }
 
-	    IMDB::$last_cache = @filemtime ( "cache/" . md5($url));
+	    IMDB::$last_cache = @filemtime ( "cache/" . md5($url) . ".cache");
 
-
-
-	    
 	    return $tmp;
 	}
 
