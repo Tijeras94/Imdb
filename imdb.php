@@ -72,15 +72,25 @@ class IMDB
 
 	public static function get($url, $cache = true)
 	{
-	    $tmp = @file_get_contents("cache/" . md5($url));
+	    $tmp = @file_get_contents("cache/" . md5($url) . ".cache");
+ 
 	    if($tmp == false)
 	    {
 	        $tmp = IMDB::file_get_curl($url, true)['contents'];
 	        if($cache)
-	            file_put_contents("cache/" . md5($url), $tmp);
-	    }
+            {
+                $gzdata = gzencode($tmp, 9);
+                file_put_contents("cache/" . md5($url) . ".cache", $gzdata);
+            }
+	    }else
+        {
+            $tmp = gzdecode($tmp);
+        }
 
 	    IMDB::$last_cache = @filemtime ( "cache/" . md5($url));
+
+
+
 	    
 	    return $tmp;
 	}
