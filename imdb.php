@@ -130,9 +130,9 @@ class IMDB
                 $this->data['show'] = array_merge($this->data['show'], $ts->fetch());
             }
             
-        }elseif($this->data['type'] == 'TV Series')
+        }elseif($this->data['type'] == 'TV Series' | $this->data['type'] == 'TV Mini Series')
         {
-            $this->data['seasons'] = (IMDB::getMatches($this->html, '~Seasons:\s*<a\s*href="(?:.*)\?season=(\d*)">~Ui',1));
+            $this->data['seasons'] = (IMDB::getMatches($this->html, '~(?:Seasons|Season):\s*<a\s*href="(?:.*)\?season=(\d*)">~Ui',1));
         }
 
 
