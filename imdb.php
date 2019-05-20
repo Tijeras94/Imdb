@@ -281,34 +281,39 @@ class IMDB
 
 }
 
-if(isset($_GET['s']) || !empty($_GET['s']))
-{ 
-	$search = IMDB::search($_GET['s']);
-	if(count($search)> 0)
-	{
-		$c = new IMDB("https://www.imdb.com/title/". $search[0]['imdb'] . "/reference");
-		header('Access-Control-Allow-Origin: *');  
-		header('Content-Type: application/json');
-		echo json_encode($c->fetch());
-	}
-}
-
-preg_match_all("~tt(\d+)~", @$_GET['imdb'], $aMatches);
-if ($aMatches === false || empty($aMatches[0][0])) {
+ if(!isset($_GET['i']) or empty($_GET['i']))
+ {
+    header('Access-Control-Allow-Origin: *');  
+    header('Content-Type: application/json');
+    echo json_encode(array('status' => 'error', 'msg'=> 'invalid number of args :('));
     exit();
+ }
+
+
+preg_match_all("~tt(\d+)~", @$_GET['i'], $aMatches);
+if ($aMatches === false || is_null($aMatches[0]) || empty($aMatches[0][0])) {
+    // args is not an imdb id, do a search instead
+    $search = IMDB::search(@$_GET['i']);
+    if(count($search)> 0)
+    {
+        $c = new IMDB("https://www.imdb.com/title/". $search[0]['imdb'] . "/reference");
+        header('Access-Control-Allow-Origin: *');  
+        header('Content-Type: application/json');
+        echo json_encode($c->fetch());
+        exit();
+    }
+}else
+{
+    // https://www.imdb.com/title/tt9432978/reference
+    $c = new IMDB("https://www.imdb.com/title/". $aMatches[0][0] . "/reference");
+
+    header('Access-Control-Allow-Origin: *');  
+    header('Content-Type: application/json');
+    echo json_encode($c->fetch());
+
+    //var_dump($c->fetch());
+    //var_dump($c->search("home"));
 }
 
-// https://www.imdb.com/title/tt9432978/reference
 
-$c = new IMDB("https://www.imdb.com/title/". $aMatches[0][0] . "/reference");
-
-//$c = new IMDB("https://www.imdb.com/title/". $c->search("home")[0]['imdb'] . "/reference");
-
-header('Access-Control-Allow-Origin: *');  
-header('Content-Type: application/json');
-echo json_encode($c->fetch());
-
-
-//var_dump($c->fetch());
-//var_dump($c->search("home"));
 ?>
